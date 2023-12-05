@@ -9,7 +9,21 @@ states = States([1, 2]);
 prob = [0.5, 0.8];
 transition = Transition(states, prob);
 
-function tbl = States(v)
+% Part C
+
+stationary = Stationary(transition);
+disp(stationary)
+% Prat D
+
+probFullUrn = ProbFullUrn(transition, 6);
+probFullUrn2 = ProbFullUrn(transition, 20);
+disp(probFullUrn2)
+
+% Part E
+
+expTimeToFill = ExpTimeToFill(transition, 0.001);
+
+function states = States(v)
 
     n = length(v);
 
@@ -26,14 +40,13 @@ function tbl = States(v)
     B = cellfun(@(x) x(:), A, 'UniformOutput', false);
     C = flip(B);
 
-    tbl = table(C{:});
+    states = table(C{:});
 
-    tbl = tbl{:,:}.';
+    states = states{:,:}.';
 end
 
 function transition = Transition(states, prob)
 
-    k = size(states, 1);
     n = size(states, 2); 
     full = states(:,6);
     fullCoins = sum(full);
@@ -104,6 +117,64 @@ function transition = Transition(states, prob)
             end
 
         end
+    end
+
+end
+
+function stationary = Stationary(M)
+    n = length(M);
+    Q = M - eye(n);
+    Q(n+1,:) = ones(1,n);
+    ret = zeros(n+1,1);
+    ret(n+1) = 1;
+
+    stationary = Q \ ret;
+end
+
+function probFullUrn = ProbFullUrn(M, N)
+
+    probFullUrn = zeros(1,N);
+
+    U = M;
+    n = length(U);
+    U(:,n) = zeros(n,1);
+    U(n,n) = 1;
+
+    p = zeros(n,1);
+    p(1) = 1;
+
+    for i = 1 : N
+        p = U * p;
+        probFullUrn(i) = p(n);
+    end
+
+end
+
+function expTimeToFill = ExpTimeToFill(M, eps)
+
+    U = M;
+    n = length(U);
+    U(:,n) = zeros(n,1);
+    U(n,n) = 1;
+
+    p = zeros(n,1);
+    p(1) = 1;
+
+    expTimeToFill = 0;
+
+    p0 = 0;
+    idx = 0;
+    bound = 1;
+
+    while bound > eps
+        idx = idx + 1;
+        p = U * p;
+        p1 = p(n);
+
+        diff = p1 - p0;
+        expTimeToFill = expTimeToFill + idx * diff;
+        bound = idx * (1 - p1);
+        p0 = p1;
     end
 
 end
